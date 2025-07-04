@@ -1,8 +1,28 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using PackPal.Data;
+using PackPal.Models;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-
+builder.Services.AddDbContext<AppDb>(options =>
+options.UseSqlServer(builder.Configuration.GetConnectionString("Default"))
+);
+builder.Services.AddIdentity<Users, IdentityRole>(options =>
+{
+    options.Password.RequireNonAlphanumeric = true; //require symbols
+    options.Password.RequireLowercase = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequiredLength = 8;
+    options.User.RequireUniqueEmail = true; //no two users can have same email
+    options.SignIn.RequireConfirmedPhoneNumber = false; //sign in options to determine 
+    options.SignIn.RequireConfirmedEmail = false;
+    options.SignIn.RequireConfirmedAccount = false;
+})
+    .AddEntityFrameworkStores<AppDb>()// tell ef core which dbcontext is used
+    .AddDefaultTokenProviders();//validate and generate security tokens
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
