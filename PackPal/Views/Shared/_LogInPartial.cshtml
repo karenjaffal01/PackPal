@@ -1,0 +1,19 @@
+﻿@using Microsoft.AspNetCore.Identity
+@inject SignInManager<Users> signInManager
+@*Built-in identity method that manages the user’s sign-in and sign-out operations, including checking whether a user is authenticated or not.*@
+
+@if (signInManager.IsSignedIn(User)) //User is predefined in razor where it refers by default to current authorized user 
+{
+	<li class="nav-item">
+		<a class="nav-link text-dark" asp-controller="Account" asp-action="Logout">Logout</a>
+	</li>
+}
+else
+{
+	<li class="nav-item">
+		<a class="nav-link text-dark" asp-controller="Account" asp-action="Login">Login</a>
+	</li>
+	<li class="nav-item">
+		<a class="nav-link text-dark" asp-controller="Account" asp-action="Register">Register</a>
+	</li>
+}
