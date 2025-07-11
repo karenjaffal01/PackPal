@@ -29,7 +29,7 @@ namespace PackPal.Controllers
 
                 if (result.Succeeded)
                 {
-                    return RedirectToAction("Index", "Home");
+                    return RedirectToAction("Index", "Profile");
                 }
                 else
                 {
@@ -58,7 +58,8 @@ namespace PackPal.Controllers
                 var result = await userManager.CreateAsync(users, model.Password);//tells userManager to save user to db and hash password securely 
                 if (result.Succeeded)
                 {
-                    return RedirectToAction("Login", "Account");//actionName controllerName
+                    await signInManager.SignInAsync(users, isPersistent: false); //to automatically login the user when registering rather than taking him to login after register
+                    return RedirectToAction("Index", "Home");
                 }
                 else
                 {
