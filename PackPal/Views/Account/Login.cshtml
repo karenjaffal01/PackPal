@@ -7,37 +7,43 @@
 <div class="account-container">
 	<div class="account-box">
 		<h2 class="text-center mb-4">Login</h2>
-		<form asp-action="Login" method="post">
-			<div asp-validation-summary="ModelOnly" class="text-danger"></div>
-			<div class="mb-4">
-				<label asp-for="Email" class="form-label"></label>
-				<input asp-for="Email" class="form-control" />
-				<span asp-validation-for="Email" class="text-danger"></span>
-			</div>
-			<div class="mb-4">
-				<label asp-for="Password" class="form-label"></label>
-				<input asp-for="Password" class="form-control" />
-				<span asp-validation-for="Password" class="text-danger"></span>
-			</div>
-			<div class="float-end">
-				<a asp-controller="Account" asp-action="VerifyEmail" class="text-decoration-none">
-					Forgot password?
-				</a>
-			</div>
-			<div class="form-check mb-4">
-				<label class="form-check-label">
-					<input asp-for="RememberMe" class="form-check-input"/>
-					@Html.DisplayNameFor(a => a.RememberMe)
-				</label>
-			</div>
-			<input type="submit" value="Login" class="btn btn-success w-100 p-2"/>
-			<p class="text-center mt-2">
-				Don't have an account? <a asp-controller="Account" asp-action="Register" class="text-decoration-none text-success">Register</a>
-			</p>
-			<div class="text-center mt-3">
-				<a asp-controller="Home" asp-action="Index" class="text-decoration-none text-success mt-3">Back Home</a>
-			</div>
-		</form>
+            <form asp-action="Login" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <div class="mb-4">
+                    <label asp-for="Email" class="form-label"></label>
+                    <input asp-for="Email" class="form-control" />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+                <div class="mb-4">
+                    <label asp-for="Password" class="form-label"></label>
+                    <input asp-for="Password" class="form-control" />
+                    <span asp-validation-for="Password" class="text-danger"></span>
+                </div>
+                <div class="float-end">
+                    <a asp-controller="Account" asp-action="VerifyEmail" class="text-decoration-none">
+                        Forgot password?
+                    </a>
+                </div>
+                <div class="form-check mb-4">
+                    <label class="form-check-label">
+                        <input asp-for="RememberMe" class="form-check-input" />
+                        @Html.DisplayNameFor(a => a.RememberMe)
+                    </label>
+                </div>
+                <input type="submit" value="Login" class="btn btn-success w-100 p-2" />
+                <p class="text-center mt-2">
+                    Don't have an account? <a asp-controller="Account" asp-action="Register" class="text-decoration-none text-success">Register</a>
+                </p>
+            </form>
+        <form asp-controller="Account" asp-action="ExternalLogin" method="post">
+            <input type="hidden" name="provider" value="Google" />
+            <input type="hidden" name="returnUrl" value="~/" />
+            <button type="submit" class="btn btn-outline-danger w-100 p-2 disabled">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google Logo" width="20" height="18" class="me-3" />
+                Login with Google
+                </button>
+        </form>
+
 	</div>
 </div>
 @section Scripts {

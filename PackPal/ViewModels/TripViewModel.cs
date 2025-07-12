@@ -1,9 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
-namespace PackPal.Models
+namespace PackPal.ViewModels
 {
-    public class Trip
+    public class TripViewModel
     {
         [Key]
         public int TripId { get; set; }
@@ -25,15 +24,5 @@ namespace PackPal.Models
 
         [Range(1, 5)]
         public int? Rating { get; set; }
-
-        [Required]
-        public string UserId { get; set; } // This will store the user's Id from AspNetUsers,ef will bind this to Users Id from identity 
-
-        [ForeignKey("UserId")]
-        public Users User { get; set; } // Navigation property to access user info
-
-
     }
 }
-
-

@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using PackPal.Data;
 using PackPal.Models;
 using PackPal.ViewModels;
 
@@ -8,22 +10,29 @@ using PackPal.ViewModels;
 public class ProfileController : Controller
 {
     private readonly UserManager<Users> _userManager;
+    private readonly AppDb _context;
 
-    public ProfileController(UserManager<Users> userManager)
+    public ProfileController(UserManager<Users> userManager, AppDb context)
     {
         _userManager = userManager;
+        _context = context;
     }
 
     [HttpGet]
     public async Task<IActionResult> Index()
     {
         var user = await _userManager.GetUserAsync(User);
+        var trips = await _context.Trips
+             .Where(t => t.UserId == user.Id)
+             .OrderByDescending(t => t.StartDate)
+             .ToListAsync();
 
         var model = new ProfileViewModel
         {
             Email = user.Email,
             CustomUsername = user.CustomUsername,
-            PhotoUrl = user.PhotoPath
+            PhotoUrl = user.PhotoPath,
+            Trips = trips
         };
 
         return View(model);

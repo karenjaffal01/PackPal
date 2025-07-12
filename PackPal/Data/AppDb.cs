@@ -10,7 +10,6 @@ namespace PackPal.Data
         {
 
         }
-
         public DbSet<Trip> Trips { get; set; }
     }
 }
