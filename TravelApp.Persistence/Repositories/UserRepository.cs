@@ -4,10 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TravelApp.Business.Services
+namespace TravelApp.Persistence.Repositories
 {
-    public class UserService
+    public class UserRepository
     {
-       
+
     }
 }

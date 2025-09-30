@@ -4,10 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TravelApp.Business.Services
+namespace TravelApp.Business.Interfaces
 {
-    public class UserService
+    public class IAuthService
     {
-       
     }
 }

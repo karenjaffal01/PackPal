@@ -6,7 +6,8 @@ using System.Threading.Tasks;
 
 namespace TravelApp.Domain.Common
 {
-    internal class Response
+    public class Response
     {
+
     }
 }

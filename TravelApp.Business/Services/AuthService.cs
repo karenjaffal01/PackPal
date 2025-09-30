@@ -6,8 +6,7 @@ using System.Threading.Tasks;
 
 namespace TravelApp.Business.Services
 {
-    public class UserService
+    public class AuthService
     {
-       
     }
 }
