@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices.Marshalling;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -16,6 +17,7 @@ namespace TravelApp.Domain.Entities
         public DateTime UpdatedAt { get; set; }
         public string ? Bio { get; set; }
         public string ? ProfilePictureUrl { get; set; }
+        public List<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
 
     }
 }

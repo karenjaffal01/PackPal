@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace TravelApp.Persistence.Interfaces
 {
-    public class IUserRepository
+    public interface IUserRepository
     {
 
     }

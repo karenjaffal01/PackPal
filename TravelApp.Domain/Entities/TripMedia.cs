@@ -8,5 +8,6 @@ namespace TravelApp.Domain.Entities
 {
     public class TripMedia
     {
+
     }
 }

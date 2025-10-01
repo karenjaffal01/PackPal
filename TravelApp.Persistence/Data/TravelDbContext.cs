@@ -12,7 +12,9 @@ namespace TravelApp.Persistence.Data
     {
         public TravelDbContext(DbContextOptions<TravelDbContext> options) : base(options)
         {
+
         }
-        DbSet<User> Users { get; set; }
+        public DbSet<User> Users { get; set; }
+        public DbSet<RefreshToken> RefreshTokens { get; set; } 
         }
 }
