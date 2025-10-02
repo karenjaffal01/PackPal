@@ -10,5 +10,8 @@ namespace TravelApp.Persistence.Interfaces
     public interface IUserRepository
     {
         Task<User> GetUserById(int id);
+        Task<User?> GetUserByEmailAsync(string email);
+        Task AddUserAsync(User user);          
+        Task<bool> UserExistsAsync(string email);
     }
 }
