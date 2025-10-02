@@ -10,6 +10,5 @@ namespace TravelApp.Business.Interfaces
     public interface IAuthService
     {
         public string CreateToken(User user);
-        public string generateRefreshToken();
     }
 }

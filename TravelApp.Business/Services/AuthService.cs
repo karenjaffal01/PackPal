@@ -10,13 +10,22 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using TravelApp.Business.Interfaces;
+using TravelApp.Domain.Dto;
 using TravelApp.Domain.Entities;
+using TravelApp.Domain.Requests;
+using TravelApp.Persistence.Interfaces;
 
 namespace TravelApp.Business.Services
 {
     public class AuthService : IAuthService
     {
         private readonly PasswordHasher<string> _hasher = new PasswordHasher<string>();
+        private readonly IAuthRepository authRepository;
+        private readonly IUserRepository userRepository;
+        public AuthService(IAuthRepository authRepository)
+        {
+            this.authRepository = authRepository;
+        }
         public string CreateToken(User user)
         {
             var issuer = Environment.GetEnvironmentVariable("JWT_ISSUER");
@@ -31,7 +40,6 @@ namespace TravelApp.Business.Services
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),                
                 new Claim(ClaimTypes.Email, user.Email)                   
             };
-
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret)); 
 
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -45,21 +53,25 @@ namespace TravelApp.Business.Services
             );
             return new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);
         }
-        public RefreshToken generateRefreshToken()
+        public async Task<RefreshTokenDto> ValidateRefreshToken(RefreshTokenRequest request)
         {
-            var randomNumber = new byte[32];
-            using var rng = RandomNumberGenerator.Create();
-            rng.GetBytes(randomNumber);
-            var random =  Convert.ToBase64String(randomNumber);
-            random = _hasher.HashPassword(random, random);
-            var refresh = new RefreshToken
+            var tokenEntity = await authRepository.GetRefreshToken(request.userId);
+            if (tokenEntity == null || tokenEntity.IsRevoked || tokenEntity.ExpiresAt < DateTime.UtcNow)
+                return null;
+            var result = _hasher.VerifyHashedPassword("refreshToken", tokenEntity.TokenHash, request.RefreshToken);
+            if (result != PasswordVerificationResult.Success)
+                return null;
+
+            var user = await userRepository.GetUserById(request.userId);
+            var refresh = authRepository.generateRefreshToken();
+            await authRepository.SaveRefreshToken(request.userId,refresh);
+            var response = new RefreshTokenDto
             {
-                TokenHash = random,
-                ExpiresAt = DateTime.UtcNow.AddDays(7),
-                CreatedAt = DateTime.UtcNow,
-                IsRevoked = false
+                AccessToken = CreateToken(user),
+                RefreshToken = refresh
             };
-            return refresh;
+            return response;
         }
+        
     }
 }
