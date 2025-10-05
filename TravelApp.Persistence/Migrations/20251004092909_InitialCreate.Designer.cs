@@ -12,8 +12,8 @@ using TravelApp.Persistence.Data;
 namespace TravelApp.Persistence.Migrations
 {
     [DbContext(typeof(TravelDbContext))]
-    [Migration("20251001115116_AddRefresh")]
-    partial class AddRefresh
+    [Migration("20251004092909_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
