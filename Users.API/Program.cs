@@ -1,5 +1,7 @@
+using Microsoft.AspNet.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -13,9 +15,6 @@ using TravelApp.Persistence.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// --------------------
-// Configure Serilog
-// --------------------
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
     .WriteTo.File("Logs/travelapp-.log", rollingInterval: RollingInterval.Day)
@@ -24,25 +23,21 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 
-// --------------------
-// Add services to DI
-// --------------------
+
 builder.Services.AddDbContext<TravelDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddControllers(); // For minimal API endpoints or controllers
+builder.Services.AddScoped<IAuthRepository, AuthRepository>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddControllers();
 
-// --------------------
-// Configure Authentication (JWT)
-// --------------------
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         var issuer = Environment.GetEnvironmentVariable("JWT_ISSUER");
         var audience = Environment.GetEnvironmentVariable("JWT_AUDIENCE");
         var secret = Environment.GetEnvironmentVariable("JWT_SECRET");
-
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -53,11 +48,23 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret)),
             ValidateLifetime = true
         };
+        options.Events = new JwtBearerEvents
+        {
+            OnAuthenticationFailed = ctx =>
+            {
+                Console.WriteLine("Authentication failed: " + ctx.Exception.Message);
+                return Task.CompletedTask;
+            },
+            OnTokenValidated = ctx =>
+            {
+                Console.WriteLine("Token validated successfully");
+                return Task.CompletedTask;
+            }
+        };
     });
 
-// --------------------
-// Configure Swagger (with JWT Auth)
-// --------------------
+
+
 
 builder.Services.AddCors(options =>
 {
@@ -74,53 +81,39 @@ builder.Services.AddCors(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Title = "Travel App API",
-        Version = "v1",
-        Description = "API documentation for the Travel App"
-    });
-
-    // Add JWT authorization to Swagger
-    var securityScheme = new OpenApiSecurityScheme
-    {
+        Description = "JWT Authorization header using the Bearer scheme. Example: 'Bearer 12345abcdef'",
         Name = "Authorization",
-        Description = "Enter 'Bearer {token}'",
         In = ParameterLocation.Header,
-        Type = SecuritySchemeType.Http,
-        Scheme = "bearer",
-        BearerFormat = "JWT",
-        Reference = new OpenApiReference
-        {
-            Type = ReferenceType.SecurityScheme,
-            Id = JwtBearerDefaults.AuthenticationScheme
-        }
-    };
-
-    c.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, securityScheme);
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
-            securityScheme,
-            new string[] {}
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new List<string>()
         }
     });
 });
 
-// --------------------
-// Build the app
-// --------------------
 var app = builder.Build();
-// --------------------
-// Middleware pipeline
-// --------------------
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "Travel App API v1");
-        c.RoutePrefix = string.Empty; // So you can access it at https://localhost:5000/
+        c.RoutePrefix = string.Empty; 
     });
 }
 app.UseCors("AllowAll");
@@ -131,5 +124,4 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
 app.Run();

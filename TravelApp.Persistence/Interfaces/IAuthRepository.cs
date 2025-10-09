@@ -11,6 +11,6 @@ namespace TravelApp.Persistence.Interfaces
     {
         string generateRefreshToken();
         Task SaveRefreshToken(int userId, string refreshToken);
-        Task<RefreshToken> GetRefreshToken(int userId);
+        Task<RefreshToken?> GetRefreshToken(int userId);
     }
 }
