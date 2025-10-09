@@ -11,5 +11,6 @@ namespace TravelApp.Business.Interfaces
     public interface IUserService
     {
         Task<Response<object>> Register(RegisteringRequest registerRequest);
+        Task<Response<object>> Login(LoggingRequest request);
     }
 }

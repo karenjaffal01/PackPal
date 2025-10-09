@@ -34,7 +34,7 @@ namespace TravelApp.Persistence.Repositories
             return user;
         }
 
-        public async Task<User> GetUserById(int id)
+        public async Task<User?> GetUserById(int id)
         {
             var user = await _context.Users.FindAsync(id);
             if (user == null)
@@ -43,10 +43,14 @@ namespace TravelApp.Persistence.Repositories
             }
             return user;
         }
-
-        public Task<bool> UserExistsAsync(string email)
+        public async Task<User?> GetUser(string username)
         {
-            throw new NotImplementedException();
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.Username == username);
+            if (user == null)
+            {
+                return null;
+            }
+            return user;
         }
     }
 }

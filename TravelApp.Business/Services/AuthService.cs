@@ -1,14 +1,8 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
-using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Security.Claims;
-using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 using TravelApp.Business.Interfaces;
 using TravelApp.Domain.Dto;
 using TravelApp.Domain.Entities;
@@ -20,58 +14,73 @@ namespace TravelApp.Business.Services
     public class AuthService : IAuthService
     {
         private readonly PasswordHasher<string> _hasher = new PasswordHasher<string>();
-        private readonly IAuthRepository authRepository;
-        private readonly IUserRepository userRepository;
-        public AuthService(IAuthRepository authRepository)
+        private readonly IAuthRepository _authRepository;
+        private readonly IUserRepository _userRepository;
+
+        public AuthService(IAuthRepository authRepository, IUserRepository userRepository)
         {
-            this.authRepository = authRepository;
+            _authRepository = authRepository;
+            _userRepository = userRepository;
         }
+
         public string CreateToken(User user)
         {
             var issuer = Environment.GetEnvironmentVariable("JWT_ISSUER");
             var audience = Environment.GetEnvironmentVariable("JWT_AUDIENCE");
             var secret = Environment.GetEnvironmentVariable("JWT_SECRET");
-            if(issuer == null  || audience== null || secret == null)
-            {
-                throw new Exception("JWT settings are not configured properly in environment variables.");
-            }
+
+            if (issuer == null || audience == null || secret == null)
+                throw new Exception("JWT environment variables not configured properly.");
+
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),                
-                new Claim(ClaimTypes.Email, user.Email)                   
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Email, user.Email)
             };
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret)); 
 
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            var tokenDescriptor = new JwtSecurityToken(
+            var token = new JwtSecurityToken(
                 issuer: issuer,
-                audience:audience,
+                audience: audience,
                 claims: claims,
-                expires: DateTime.UtcNow.AddHours(1),
+                expires: DateTime.UtcNow.AddMinutes(30),
                 signingCredentials: creds
             );
-            return new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);
+            
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
-        public async Task<RefreshTokenDto> ValidateRefreshToken(RefreshTokenRequest request)
+
+        public string GenerateRefreshToken() => _authRepository.generateRefreshToken();
+
+        public async Task SaveRefreshToken(int userId, string refreshToken)
         {
-            var tokenEntity = await authRepository.GetRefreshToken(request.userId);
-            if (tokenEntity == null || tokenEntity.IsRevoked || tokenEntity.ExpiresAt < DateTime.UtcNow)
-                return null;
-            var result = _hasher.VerifyHashedPassword("refreshToken", tokenEntity.TokenHash, request.RefreshToken);
-            if (result != PasswordVerificationResult.Success)
+            await _authRepository.SaveRefreshToken(userId, refreshToken);
+        }
+
+        public async Task<RefreshTokenDto?> ValidateRefreshToken(RefreshTokenRequest request)
+        {
+            var stored = await _authRepository.GetRefreshToken(request.userId);
+            if (stored == null || stored.IsRevoked || stored.ExpiresAt < DateTime.UtcNow)
                 return null;
 
-            var user = await userRepository.GetUserById(request.userId);
-            var refresh = authRepository.generateRefreshToken();
-            await authRepository.SaveRefreshToken(request.userId,refresh);
-            var response = new RefreshTokenDto
+            var verification = _hasher.VerifyHashedPassword("refreshToken", stored.TokenHash, request.RefreshToken);
+            if (verification != PasswordVerificationResult.Success)
+                return null;
+
+            var user = await _userRepository.GetUserById(request.userId);
+            if (user == null)
+                return null;
+
+            var newRefreshToken = GenerateRefreshToken();
+            await _authRepository.SaveRefreshToken(user.Id, newRefreshToken);
+
+            return new RefreshTokenDto
             {
                 AccessToken = CreateToken(user),
-                RefreshToken = refresh
+                RefreshToken = newRefreshToken
             };
-            return response;
         }
-        
     }
 }

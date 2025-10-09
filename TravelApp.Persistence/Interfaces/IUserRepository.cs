@@ -11,7 +11,7 @@ namespace TravelApp.Persistence.Interfaces
     {
         Task<User> GetUserById(int id);
         Task<User?> GetUserByEmailAsync(string email);
-        Task AddUserAsync(User user);          
-        Task<bool> UserExistsAsync(string email);
+        Task AddUserAsync(User user);
+        Task<User?> GetUser(string username);
     }
 }

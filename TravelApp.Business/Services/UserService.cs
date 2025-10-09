@@ -17,12 +17,14 @@ namespace TravelApp.Business.Services
     public class UserService: IUserService
     {
         private readonly IUserRepository _repository;
+        private readonly IAuthService _authService;
         private readonly PasswordHasher<User> _hasher;
 
-        public UserService(IUserRepository repository)
+        public UserService(IUserRepository repository, IAuthService authService)
         {
             _repository = repository;
             _hasher = new PasswordHasher<User>();
+            _authService = authService;
         }
         public async Task<Response<object>> Register(RegisteringRequest registerRequest)
         {
@@ -44,5 +46,32 @@ namespace TravelApp.Business.Services
                 "User registered successfully."
             );
         }
+        public async Task<Response<object>> Login(LoggingRequest request)
+        {
+            var user = await _repository.GetUser(request.Username);
+            if (user == null)
+                return ResponseFactory.Fail<object>("Invalid username or password.");
+
+            var result = _hasher.VerifyHashedPassword(user, user.PasswordHash, request.Password);
+            if (result == Microsoft.AspNetCore.Identity.PasswordVerificationResult.Failed)
+                return ResponseFactory.Fail<object>("Invalid username or password.");
+
+            var accessToken = _authService.CreateToken(user);
+            var refreshToken = _authService.GenerateRefreshToken();
+
+            await _authService.SaveRefreshToken(user.Id, refreshToken);
+
+            var response = new
+            {
+                user.Id,
+                user.Username,
+                user.Email,
+                AccessToken = accessToken,
+                RefreshToken = refreshToken
+            };
+
+            return ResponseFactory.Success<object>(response, "Login successful.");
+        }
+
     }
 }
